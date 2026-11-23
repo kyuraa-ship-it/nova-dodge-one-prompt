@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NOVA DODGE — built from one prompt</title>
+<style>
+  html, body { margin: 0; padding: 0; background: #141a2e; height: 100%; }
+  body { display: flex; flex-direction: column; align-items: center; justify-content: center;
+         font-family: system-ui, sans-serif; color: #f5efe0; }
+  canvas { width: min(540px, 96vw); aspect-ratio: 9 / 16; image-rendering: auto;
+           border: 2px solid #e8a33d; border-radius: 12px; background: #0b1026; }
+  p { margin: 12px 0 0; font-size: 14px; opacity: 0.85; text-align: center; }
+  b { color: #ffd23f; }
+</style>
+</head>
+<body>
+<canvas id="game" width="540" height="960"></canvas>
+<p><b>NOVA DODGE</b> — dodge the asteroids, collect the stars. Arrow keys / WASD to move. R to restart.</p>
+<p>Built by an AI agent from one prompt. Seed 20261122 — the same seed plays the same game.</p>
+<script type="module">
+  import { createGame, step, draw, TICK, SEED } from './game.js';
+
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  let game = createGame(SEED);
+  const keys = {};
+
+  addEventListener('keydown', (e) => {
+    keys[e.key.toLowerCase()] = true;
+    if (e.key.toLowerCase() === 'r') game = createGame(SEED);
+    if (['arrowleft', 'arrowright', 'arrowup', 'arrowdown', ' '].includes(e.key.toLowerCase())) e.preventDefault();
+  });
+  addEventListener('keyup', (e) => { keys[e.key.toLowerCase()] = false; });
+
+  const input = () => ({
+    left: keys['arrowleft'] || keys['a'],
+    right: keys['arrowright'] || keys['d'],
+  });
+
+  let acc = 0;
+  let last = performance.now();
+  function frame(now) {
+    acc += Math.min((now - last) / 1000, 0.1);
+    last = now;
+    while (acc >= TICK) {
+      step(game, input());
+      acc -= TICK;
+    }
+    draw(game, ctx);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+</script>
+</body>
+</html>
